@@ -7,7 +7,7 @@ is_generic: no
 vendor: motorola
 device: moto g84 5G
 photo: bangkk.png
-source: kernelcontinuityproject/android_kernel_motorola_sm6375
+source: kernelcontinuityproject/android_kernel_motorola_sm6375-kcp
 kernelrelease: 5.4.302-moto-kcp4
 patches: 4
 download: https://github.com/kernelcontinuityproject/kcp-ci/releases/download/5.4.302-moto-kcp4_bangkk/KCP-5.4.302-moto-kcp4-20261117.zip

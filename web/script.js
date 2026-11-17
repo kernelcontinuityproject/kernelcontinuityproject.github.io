@@ -1,8 +1,24 @@
-const INDEX_URL = '../index.kcpi';
-const PHOTOS_DIR = '../devices/photos/';
+// tries index.kcpi next to the page first, then one level up
+const INDEX_URLS = ['index.kcpi', '../index.kcpi'];
+let photosDir = 'devices/photos/';
 
 const isEmpty = v => v === undefined || v === '' || /^null$/i.test(v);
 const isYes = v => /^(yes|true|1)$/i.test((v || '').trim());
+
+async function fetchIndex() {
+  let err;
+  for (const u of INDEX_URLS) {
+    try {
+      const r = await fetch(u, { cache: 'no-cache' });
+      if (r.ok) {
+        photosDir = u.replace('index.kcpi', '') + 'devices/photos/';
+        return await r.text();
+      }
+      err = new Error('http ' + r.status + ' on ' + u);
+    } catch (e) { err = e; }
+  }
+  throw err;
+}
 
 function parseKcpi(text) {
   const out = [];
@@ -35,17 +51,17 @@ function card(t) {
   const generic = isYes(t.is_generic);
   const top = el('div', { className: 'top' });
 
-  // foto só em alvo não-genérico, e só se o arquivo existir
+  // photo only for non-generic targets, and only if the file exists
   if (!generic && !isEmpty(t.photo)) {
     const img = new Image();
     img.alt = t.device || t.id;
     img.onload = () => top.prepend(img);
-    img.src = PHOTOS_DIR + encodeURIComponent(t.photo);
+    img.src = /^https?:\/\//i.test(t.photo) ? t.photo : photosDir + encodeURIComponent(t.photo);
   }
 
   const title = generic ? t.id : (t.device || t.id);
   const h3 = el('h3', { textContent: title });
-  if (generic) h3.append(el('span', { className: 'tag', textContent: 'genérico' }));
+  if (generic) h3.append(el('span', { className: 'tag', textContent: 'generic' }));
   const head = el('div', {}, h3);
   if (!generic && !isEmpty(t.vendor)) head.append(el('div', { className: 'vendor', textContent: t.vendor }));
   top.append(head);
@@ -68,14 +84,12 @@ function card(t) {
 async function main() {
   const list = document.getElementById('list');
   try {
-    const r = await fetch(INDEX_URL, { cache: 'no-cache' });
-    if (!r.ok) throw new Error('http ' + r.status);
-    const targets = parseKcpi(await r.text());
+    const targets = parseKcpi(await fetchIndex());
     list.replaceChildren();
-    if (!targets.length) { list.append(el('p', { className: 'mut', textContent: 'nenhum alvo no index.kcpi.' })); return; }
+    if (!targets.length) { list.append(el('p', { className: 'mut', textContent: 'no targets in index.kcpi.' })); return; }
     for (const t of targets) list.append(card(t));
   } catch (e) {
-    list.replaceChildren(el('p', { className: 'mut', textContent: 'não deu pra carregar o index.kcpi (' + e.message + '). precisa servir por http, não abrir como file://.' }));
+    list.replaceChildren(el('p', { className: 'mut', textContent: 'could not load index.kcpi (' + e.message + '). it must be served over http, not opened as file://.' }));
   }
 }
 main();

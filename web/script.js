@@ -1,6 +1,7 @@
-// tries index.kcpi next to the page first, then one level up
-const INDEX_URLS = ['index.kcpi', '../index.kcpi'];
-let photosDir = 'devices/photos/';
+// index and photos come from raw.githubusercontent.com
+const RAW = 'https://raw.githubusercontent.com/kernelcontinuityproject/kernelcontinuityproject.github.io/refs/heads/main/';
+const INDEX_URLS = [RAW + 'index.kcpi'];
+let photosDir = RAW + 'devices/photos/';
 
 const isEmpty = v => v === undefined || v === '' || /^null$/i.test(v);
 const isYes = v => /^(yes|true|1)$/i.test((v || '').trim());
@@ -11,7 +12,6 @@ async function fetchIndex() {
     try {
       const r = await fetch(u, { cache: 'no-cache' });
       if (r.ok) {
-        photosDir = u.replace('index.kcpi', '') + 'devices/photos/';
         return await r.text();
       }
       err = new Error('http ' + r.status + ' on ' + u);
